@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --ink: #1f1a15;
+  --muted: #61544a;
+  --accent: #d66b2b;
+  --accent-2: #0c8b8f;
+  --surface: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background: radial-gradient(circle at 20% 20%, #fff1e1 0, rgba(255, 241, 225, 0.3) 40%, transparent 60%),
+    radial-gradient(circle at 80% 10%, #e1f5f3 0, rgba(225, 245, 243, 0.3) 35%, transparent 60%),
+    var(--bg);
+  color: var(--ink);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

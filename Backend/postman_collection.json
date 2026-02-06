@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "Audit System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Smart Reconciliation & Audit System backend"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"change_me\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        {
+          "name": "POST /api/uploads/preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/uploads/preview", "host": ["{{baseUrl}}"], "path": ["api", "uploads", "preview"] }
+          }
+        },
+        {
+          "name": "GET /api/uploads/:id/preview",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/uploads/:id/preview", "host": ["{{baseUrl}}"], "path": ["api", "uploads", ":id", "preview"] }
+          }
+        },
+        {
+          "name": "POST /api/uploads/:id/submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mapping\": {\n    \"transactionId\": \"Transaction ID\",\n    \"amount\": \"Amount\",\n    \"referenceNumber\": \"Reference Number\",\n    \"date\": \"Date\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/uploads/:id/submit", "host": ["{{baseUrl}}"], "path": ["api", "uploads", ":id", "submit"] }
+          }
+        },
+        {
+          "name": "POST /api/uploads",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" },
+                { "key": "mapping", "type": "text", "value": "{\"transactionId\":\"Transaction ID\",\"amount\":\"Amount\",\"referenceNumber\":\"Reference Number\",\"date\":\"Date\"}" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/uploads", "host": ["{{baseUrl}}"], "path": ["api", "uploads"] }
+          }
+        },
+        {
+          "name": "GET /api/uploads/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/uploads/:id", "host": ["{{baseUrl}}"], "path": ["api", "uploads", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reconciliation",
+      "item": [
+        {
+          "name": "GET /api/reconciliation",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/reconciliation", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation"] }
+          }
+        },
+        {
+          "name": "GET /api/reconciliation/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/reconciliation/:id", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation", ":id"] }
+          }
+        },
+        {
+          "name": "PATCH /api/reconciliation/:id/manual",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uploadedRecord\": {\n    \"amount\": 980.5\n  },\n  \"status\": \"partial\",\n  \"notes\": \"Manual correction\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reconciliation/:id/manual", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation", ":id", "manual"] }
+          }
+        },
+        {
+          "name": "GET /api/reconciliation/rules/list",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/reconciliation/rules/list", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation", "rules", "list"] }
+          }
+        },
+        {
+          "name": "POST /api/reconciliation/rules",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Exact Match (Txn + Amount)\",\n  \"type\": \"exact\",\n  \"priority\": 2,\n  \"active\": true,\n  \"config\": {\n    \"matchFields\": [\"transactionId\", \"amount\"]\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reconciliation/rules", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation", "rules"] }
+          }
+        },
+        {
+          "name": "PATCH /api/reconciliation/rules/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reconciliation/rules/:id", "host": ["{{baseUrl}}"], "path": ["api", "reconciliation", "rules", ":id"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "GET /api/dashboard/summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/summary?dateFrom=2026-01-01&dateTo=2026-02-01",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "summary"],
+              "query": [
+                { "key": "dateFrom", "value": "2026-01-01" },
+                { "key": "dateTo", "value": "2026-02-01" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "GET /api/audit",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/audit", "host": ["{{baseUrl}}"], "path": ["api", "audit"] }
+          }
+        },
+        {
+          "name": "GET /api/audit/timeline/:recordType/:recordId",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/audit/timeline/:recordType/:recordId", "host": ["{{baseUrl}}"], "path": ["api", "audit", "timeline", ":recordType", ":recordId"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET /api/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "POST /api/users",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Analyst One\",\n  \"email\": \"analyst@example.com\",\n  \"password\": \"change_me\",\n  \"role\": \"analyst\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "PATCH /api/users/:id/role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"viewer\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/:id/role", "host": ["{{baseUrl}}"], "path": ["api", "users", ":id", "role"] }
+          }
+        }
+      ]
+    }
+  ]
+}

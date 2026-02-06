@@ -1,0 +1,151 @@
+const { Worker } = require('bullmq');
+const { connectDb } = require('../config/db');
+const { connection } = require('../config/redis');
+const UploadJob = require('../models/UploadJob');
+const UploadedRecord = require('../models/UploadedRecord');
+const SystemRecord = require('../models/SystemRecord');
+const ReconciliationResult = require('../models/ReconciliationResult');
+const AuditLog = require('../models/AuditLog');
+const { parseFile } = require('../services/fileParser');
+const { evaluateRules } = require('../services/reconciliationEngine');
+const { ensureDefaultRules, getActiveRules } = require('../services/reconciliationRules');
+const { hashBuffer } = require('../utils/hash');
+const { isDuplicateFingerprint, saveFingerprint } = require('../services/idempotency');
+const { env } = require('../config/env');
+
+function resolveField(raw, mapping, fallbackKeys) {
+  if (mapping && mapping[fallbackKeys[0]]) {
+    const key = mapping[fallbackKeys[0]];
+    return raw[key];
+  }
+  for (const key of fallbackKeys) {
+    if (raw[key] !== undefined) return raw[key];
+  }
+  return undefined;
+}
+
+function buildUploadedRecord(raw, mapping) {
+  const transactionId = String(resolveField(raw, mapping, ['transactionId', 'Transaction ID']) || '').trim();
+  if (!transactionId) return null;
+  return {
+    transactionId,
+    amount: Number(resolveField(raw, mapping, ['amount', 'Amount']) || 0),
+    referenceNumber: String(resolveField(raw, mapping, ['referenceNumber', 'Reference Number']) || '').trim(),
+    date: new Date(resolveField(raw, mapping, ['date', 'Date']) || Date.now()),
+    raw
+  };
+}
+
+async function processUpload(job) {
+  const uploadJobId = job.data.uploadJobId;
+  const uploadJob = await UploadJob.findById(uploadJobId);
+  if (!uploadJob) return;
+  if (uploadJob.status === 'draft') return;
+
+  try {
+    const buffer = require('fs').readFileSync(uploadJob.path);
+    const fingerprint = hashBuffer(buffer);
+    const existing = await isDuplicateFingerprint(fingerprint);
+    if (existing) {
+      const originalJob = await UploadJob.findById(existing.uploadJob).lean();
+      uploadJob.status = 'completed';
+      uploadJob.fingerprint = fingerprint;
+      uploadJob.reusedFrom = existing.uploadJob;
+      if (originalJob?.stats) {
+        uploadJob.stats = originalJob.stats;
+      }
+      await uploadJob.save();
+      return;
+    }
+
+    const records = await parseFile(uploadJob.path, uploadJob.filename, env.MAX_ROWS);
+    const rules = await getActiveRules();
+    const batchSize = env.BATCH_SIZE;
+    let stats = { total: 0, matched: 0, unmatched: 0, duplicate: 0, partial: 0, processed: 0, skipped: 0, failed: 0 };
+
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      for (const raw of batch) {
+        try {
+          const uploaded = buildUploadedRecord(raw, uploadJob.mapping);
+          if (!uploaded) {
+            stats.skipped += 1;
+            continue;
+          }
+          const saved = await UploadedRecord.create({ ...uploaded, uploadJob: uploadJob._id });
+          const duplicateCount = await UploadedRecord.countDocuments({
+            uploadJob: uploadJob._id,
+            transactionId: uploaded.transactionId
+          });
+          const duplicateCountGlobal = await UploadedRecord.countDocuments({
+            transactionId: uploaded.transactionId
+          });
+          const system = await SystemRecord.findOne({ transactionId: uploaded.transactionId });
+          const { status, mismatches } = evaluateRules({
+            uploaded,
+            system,
+            duplicateCount,
+            duplicateCountGlobal,
+            rules
+          });
+
+          await ReconciliationResult.create({
+            uploadJob: uploadJob._id,
+            uploadedRecord: saved._id,
+            systemRecord: system ? system._id : undefined,
+            status,
+            mismatches
+          });
+
+          await AuditLog.create({
+            recordType: 'UploadedRecord',
+            recordId: saved._id,
+            action: 'reconciled',
+            changes: { status }
+          });
+
+          stats.total += 1;
+          stats.processed += 1;
+          if (status === 'exact') stats.matched += 1;
+          if (status === 'partial') stats.partial += 1;
+          if (status === 'duplicate') stats.duplicate += 1;
+          if (status === 'unmatched') stats.unmatched += 1;
+        } catch (err) {
+          stats.failed += 1;
+          stats.skipped += 1;
+        }
+      }
+      uploadJob.stats = stats;
+      await uploadJob.save();
+    }
+
+    uploadJob.status = 'completed';
+    uploadJob.stats = stats;
+    uploadJob.fingerprint = fingerprint;
+    await uploadJob.save();
+    await saveFingerprint(fingerprint, uploadJob._id);
+  } catch (err) {
+    uploadJob.status = 'failed';
+    uploadJob.error = err.message;
+    await uploadJob.save();
+    throw err;
+  }
+}
+
+connectDb()
+  .then(() => {
+    console.log('Worker MongoDB connected');
+    return ensureDefaultRules();
+  })
+  .catch((err) => {
+    console.error('Worker failed to connect MongoDB', err);
+    process.exit(1);
+  });
+
+const worker = new Worker('uploadQueue', processUpload, { connection });
+
+worker.on('failed', (job, err) => {
+  console.error('Job failed', job.id, err);
+});
+
+module.exports = { worker };
