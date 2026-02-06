@@ -110,7 +110,7 @@ export default function Users() {
       <SectionHeader
         title="Team & Roles"
         subtitle="Manage access and responsibilities"
-        action={<button className="rounded-full bg-[color:var(--ink)] px-4 py-2 text-xs font-semibold text-white">Invite User</button>}
+        action={<button className="rounded-full bg-(--ink) px-4 py-2 text-xs font-semibold text-white">Invite User</button>}
       />
 
       <Panel title="Create User">
@@ -143,7 +143,7 @@ export default function Users() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="md:col-span-4 rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+            className="md:col-span-4 rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
           >
             {isSubmitting ? 'Creating...' : 'Create User'}
           </button>
@@ -153,7 +153,7 @@ export default function Users() {
       <Panel title="Active Users">
         <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
           <table className="w-full text-left text-sm">
-            <thead className="bg-black/5 text-xs uppercase tracking-widest text-[color:var(--muted)]">
+            <thead className="bg-black/5 text-xs uppercase tracking-widest text-(--muted)">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (

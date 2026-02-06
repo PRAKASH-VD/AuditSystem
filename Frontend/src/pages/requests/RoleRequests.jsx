@@ -123,7 +123,7 @@ export default function RoleRequests() {
           <button
             type="button"
             onClick={() => load(1)}
-            className="rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+            className="rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
           >
             Refresh
           </button>
@@ -132,11 +132,11 @@ export default function RoleRequests() {
 
       <Panel title="Requests">
         {items.length === 0 ? (
-          <p className="text-sm text-[color:var(--muted)]">No requests found.</p>
+          <p className="text-sm text-(--muted)">No requests found.</p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="bg-black/5 text-xs uppercase tracking-widest text-[color:var(--muted)]">
+              <thead className="bg-black/5 text-xs uppercase tracking-widest text-(--muted)">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -171,7 +171,7 @@ export default function RoleRequests() {
           >
             Prev
           </button>
-          <span className="text-xs text-[color:var(--muted)]">Page {page} of {totalPages}</span>
+          <span className="text-xs text-(--muted)">Page {page} of {totalPages}</span>
           <button
             type="button"
             disabled={page >= totalPages}

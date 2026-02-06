@@ -110,7 +110,7 @@ export default function Audit() {
               Refresh Logs
             </button>
             <button
-              className="rounded-full bg-[color:var(--accent)] px-4 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-(--accent) px-4 py-2 text-xs font-semibold text-white"
               onClick={handleExport}
             >
               Export CSV
@@ -145,7 +145,7 @@ export default function Audit() {
           <button
             type="button"
             onClick={() => loadLogs(1)}
-            className="rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+            className="rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
           >
             Apply Filters
           </button>
@@ -157,11 +157,11 @@ export default function Audit() {
 
       <Panel title="Recent Audit Logs">
         {logs.length === 0 ? (
-          <p className="text-sm text-[color:var(--muted)]">No logs loaded yet. Click Refresh Logs.</p>
+          <p className="text-sm text-(--muted)">No logs loaded yet. Click Refresh Logs.</p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="bg-black/5 text-xs uppercase tracking-widest text-[color:var(--muted)]">
+              <thead className="bg-black/5 text-xs uppercase tracking-widest text-(--muted)">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -195,7 +195,7 @@ export default function Audit() {
           >
             Prev
           </button>
-          <span className="text-xs text-[color:var(--muted)]">Page {page} of {totalPages}</span>
+          <span className="text-xs text-(--muted)">Page {page} of {totalPages}</span>
           <button
             type="button"
             disabled={page >= totalPages}
@@ -226,7 +226,7 @@ export default function Audit() {
           <button
             type="button"
             onClick={loadTimeline}
-            className="rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+            className="rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
           >
             Load
           </button>
@@ -236,18 +236,18 @@ export default function Audit() {
       <Panel title="Record Timeline">
         <div className="space-y-4">
           {timeline.length === 0 ? (
-            <p className="text-sm text-[color:var(--muted)]">No timeline entries found.</p>
+            <p className="text-sm text-(--muted)">No timeline entries found.</p>
           ) : (
             timeline.map((item, index) => (
               <div key={item._id || index} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className="h-3 w-3 rounded-full bg-[color:var(--accent-2)]" />
+                  <div className="h-3 w-3 rounded-full bg-(--accent-2)" />
                   {index !== timeline.length - 1 ? <div className="h-full w-px bg-black/10" /> : null}
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-white px-4 py-3">
-                  <p className="text-xs text-[color:var(--muted)]">{new Date(item.createdAt).toLocaleString()}</p>
+                  <p className="text-xs text-(--muted)">{new Date(item.createdAt).toLocaleString()}</p>
                   <p className="text-sm font-semibold">{item.action}</p>
-                  <p className="text-xs text-[color:var(--muted)]">{item.recordType} - {item.recordId}</p>
+                  <p className="text-xs text-(--muted)">{item.recordType} - {item.recordId}</p>
                 </div>
               </div>
             ))

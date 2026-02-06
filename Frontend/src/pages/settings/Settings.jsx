@@ -45,7 +45,7 @@ export default function Settings() {
       <Panel title="Change Password">
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 md:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">Current Password</label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-(--muted)">Current Password</label>
             <input
               type="password"
               {...register('currentPassword')}
@@ -55,7 +55,7 @@ export default function Settings() {
             {errors.currentPassword ? <p className="mt-1 text-xs text-rose-600">{errors.currentPassword.message}</p> : null}
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">New Password</label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-(--muted)">New Password</label>
             <input
               type="password"
               {...register('newPassword')}
@@ -65,7 +65,7 @@ export default function Settings() {
             {errors.newPassword ? <p className="mt-1 text-xs text-rose-600">{errors.newPassword.message}</p> : null}
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">Confirm Password</label>
+            <label className="text-xs font-semibold uppercase tracking-widest text-(--muted)">Confirm Password</label>
             <input
               type="password"
               {...register('confirm')}
@@ -78,7 +78,7 @@ export default function Settings() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="md:col-span-2 rounded-full bg-[color:var(--accent-2)] px-4 py-3 text-xs font-semibold text-white"
+            className="md:col-span-2 rounded-full bg-(--accent-2) px-4 py-3 text-xs font-semibold text-white"
           >
             {isSubmitting ? 'Updating...' : 'Update Password'}
           </button>

@@ -174,7 +174,7 @@ export default function Reconciliation() {
         <Panel title="Match Results">
           <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="bg-black/5 text-xs uppercase tracking-widest text-[color:var(--muted)]">
+              <thead className="bg-black/5 text-xs uppercase tracking-widest text-(--muted)">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -215,7 +215,7 @@ export default function Reconciliation() {
             >
               Prev
             </button>
-            <span className="text-xs text-[color:var(--muted)]">Page {page} of {totalPages}</span>
+            <span className="text-xs text-(--muted)">Page {page} of {totalPages}</span>
             <button
               type="button"
               disabled={page >= totalPages}
@@ -242,7 +242,7 @@ export default function Reconciliation() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[color:var(--muted)]">Select a record to view detail.</p>
+              <p className="text-sm text-(--muted)">Select a record to view detail.</p>
             )}
           </Panel>
 
@@ -250,11 +250,11 @@ export default function Reconciliation() {
             {selected ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-black/10 bg-white p-4">
-                  <p className="text-xs uppercase tracking-widest text-[color:var(--muted)]">Result</p>
+                  <p className="text-xs uppercase tracking-widest text-(--muted)">Result</p>
                   <p className="mt-2 text-sm font-semibold">{selected._id}</p>
-                  <p className="text-xs text-[color:var(--muted)]">Current: {selected.status}</p>
+                  <p className="text-xs text-(--muted)">Current: {selected.status}</p>
                 </div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">
+                <label className="block text-xs font-semibold uppercase tracking-widest text-(--muted)">
                   Update Status
                   <select
                     className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm"
@@ -267,7 +267,7 @@ export default function Reconciliation() {
                     <option value="unmatched">unmatched</option>
                   </select>
                 </label>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">
+                <label className="block text-xs font-semibold uppercase tracking-widest text-(--muted)">
                   Notes
                   <textarea
                     className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm"
@@ -279,13 +279,13 @@ export default function Reconciliation() {
                 <button
                   type="button"
                   onClick={applyUpdate}
-                  className="w-full rounded-full bg-[color:var(--accent)] px-4 py-2 text-xs font-semibold text-white"
+                  className="w-full rounded-full bg-(--accent) px-4 py-2 text-xs font-semibold text-white"
                 >
                   Apply Manual Correction
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-[color:var(--muted)]">Select a record to review.</p>
+              <p className="text-sm text-(--muted)">Select a record to review.</p>
             )}
           </Panel>
 
@@ -319,21 +319,21 @@ export default function Reconciliation() {
                   <button
                     type="button"
                     onClick={createNewRule}
-                    className="rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+                    className="rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
                   >
                     Add Rule
                   </button>
                 </div>
 
                 {rules.length === 0 ? (
-                  <p className="text-sm text-[color:var(--muted)]">No rules loaded.</p>
+                  <p className="text-sm text-(--muted)">No rules loaded.</p>
                 ) : (
                   <div className="space-y-2">
                     {rules.map((rule) => (
                       <div key={rule._id} className="flex items-center justify-between rounded-2xl border border-black/10 bg-white px-4 py-3">
                         <div>
                           <p className="text-sm font-semibold">{rule.name}</p>
-                          <p className="text-xs text-[color:var(--muted)]">{rule.type} ? Priority {rule.priority}</p>
+                          <p className="text-xs text-(--muted)">{rule.type} ? Priority {rule.priority}</p>
                         </div>
                         <button
                           type="button"

@@ -247,12 +247,12 @@ export default function Uploads() {
             <button
               type="button"
               onClick={() => setSearchParams({ jobId: row.original.reusedFrom })}
-              className="text-xs font-semibold text-[color:var(--accent-2)] underline"
+              className="text-xs font-semibold text-(--accent-2) underline"
             >
               {row.original.reusedFrom}
             </button>
           ) : (
-            <span className="text-xs text-[color:var(--muted)]">—</span>
+            <span className="text-xs text-(--muted)">—</span>
           )
       },
       {
@@ -263,7 +263,7 @@ export default function Uploads() {
               Reused
             </span>
           ) : (
-            <span className="text-xs text-[color:var(--muted)]">—</span>
+            <span className="text-xs text-(--muted)">—</span>
           )
       },
       {
@@ -305,7 +305,7 @@ export default function Uploads() {
       <SectionHeader
         title="Upload Center"
         subtitle="Drop a file, map columns, and launch reconciliation"
-        action={<button className="rounded-full bg-[color:var(--ink)] px-4 py-2 text-xs font-semibold text-white">New Upload</button>}
+        action={<button className="rounded-full bg-(--ink) px-4 py-2 text-xs font-semibold text-white">New Upload</button>}
       />
 
       <Panel title="Upload A New File">
@@ -317,12 +317,12 @@ export default function Uploads() {
         >
           <input {...getInputProps()} />
           <p className="text-sm font-semibold">Drag & drop CSV or Excel here</p>
-          <p className="mt-2 text-xs text-[color:var(--muted)]">Up to 50,000 rows. Preview + map before submitting.</p>
+          <p className="mt-2 text-xs text-(--muted)">Up to 50,000 rows. Preview + map before submitting.</p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={open}
-              className="rounded-full bg-[color:var(--accent)] px-5 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-(--accent) px-5 py-2 text-xs font-semibold text-white"
             >
               Select File
             </button>
@@ -345,7 +345,7 @@ export default function Uploads() {
           <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
             <div className="overflow-auto rounded-2xl border border-black/10">
               <table className="w-full text-left text-xs">
-                <thead className="bg-black/5 text-[color:var(--muted)]">
+                <thead className="bg-black/5 text-(--muted)">
                   <tr>
                     {preview.headers.map((header) => (
                       <th key={header} className="px-3 py-2">{header}</th>
@@ -366,7 +366,7 @@ export default function Uploads() {
 
             <div className="space-y-4">
               {Object.keys(mapping).map((key) => (
-                <label key={key} className="block text-xs font-semibold uppercase tracking-widest text-[color:var(--muted)]">
+                <label key={key} className="block text-xs font-semibold uppercase tracking-widest text-(--muted)">
                   {key}
                   <select
                     className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm"
@@ -382,7 +382,7 @@ export default function Uploads() {
               ))}
 
               <div className="rounded-2xl border border-black/10 bg-white p-4">
-                <p className="text-xs uppercase tracking-widest text-[color:var(--muted)]">Save Mapping Set</p>
+                <p className="text-xs uppercase tracking-widest text-(--muted)">Save Mapping Set</p>
                 <input
                   className="mt-3 w-full rounded-2xl border border-black/10 px-3 py-2 text-sm"
                   placeholder="Mapping name"
@@ -413,7 +413,7 @@ export default function Uploads() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="w-full rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+                className="w-full rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
               >
                 Submit & Reconcile
               </button>
@@ -443,12 +443,12 @@ export default function Uploads() {
             <button
               type="button"
               onClick={handleDirectUpload}
-              className="rounded-full bg-[color:var(--ink)] px-4 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-(--ink) px-4 py-2 text-xs font-semibold text-white"
             >
               Direct Upload
             </button>
           </div>
-          <p className="mt-2 text-xs text-[color:var(--muted)]">Uses the current mapping selection.</p>
+          <p className="mt-2 text-xs text-(--muted)">Uses the current mapping selection.</p>
         </Panel>
       ) : null}
 
@@ -486,7 +486,7 @@ export default function Uploads() {
           <button
             type="button"
             onClick={() => loadHistory(1)}
-            className="md:col-span-4 rounded-full bg-[color:var(--accent-2)] px-4 py-2 text-xs font-semibold text-white"
+            className="md:col-span-4 rounded-full bg-(--accent-2) px-4 py-2 text-xs font-semibold text-white"
           >
             Apply Filters
           </button>
@@ -496,20 +496,20 @@ export default function Uploads() {
       <Panel title="Upload Job History">
         {selectedJob ? (
           <div className="mb-4 rounded-2xl border border-black/10 bg-white px-4 py-3 text-xs">
-            <p className="text-[color:var(--muted)]">Selected Job</p>
+            <p className="text-(--muted)">Selected Job</p>
             <p className="mt-1 font-semibold">{selectedJob._id}</p>
-            <p className="text-[color:var(--muted)]">Status: {selectedJob.status}</p>
+            <p className="text-(--muted)">Status: {selectedJob.status}</p>
             {selectedJob.reusedFrom ? (
-              <p className="text-[color:var(--muted)]">Reused From: {selectedJob.reusedFrom}</p>
+              <p className="text-(--muted)">Reused From: {selectedJob.reusedFrom}</p>
             ) : null}
           </div>
         ) : null}
         {history.length === 0 ? (
-          <p className="text-sm text-[color:var(--muted)]">No upload jobs found.</p>
+          <p className="text-sm text-(--muted)">No upload jobs found.</p>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
             <table className="w-full text-left text-sm">
-              <thead className="bg-black/5 text-xs uppercase tracking-widest text-[color:var(--muted)]">
+              <thead className="bg-black/5 text-xs uppercase tracking-widest text-(--muted)">
                 {historyTable.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -543,7 +543,7 @@ export default function Uploads() {
           >
             Prev
           </button>
-          <span className="text-xs text-[color:var(--muted)]">Page {historyPage} of {historyPages}</span>
+          <span className="text-xs text-(--muted)">Page {historyPage} of {historyPages}</span>
           <button
             type="button"
             disabled={historyPage >= historyPages}
