@@ -9,6 +9,8 @@ const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
   REDIS_HOST: process.env.REDIS_HOST || '127.0.0.1',
   REDIS_PORT: Number(process.env.REDIS_PORT || 6379),
+  REDIS_URL: process.env.REDIS_URL,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   UPLOAD_DIR: process.env.UPLOAD_DIR || 'uploads',
   BATCH_SIZE: Number(process.env.BATCH_SIZE || 1000),
   MAX_ROWS: Number(process.env.MAX_ROWS || 50000),
