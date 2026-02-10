@@ -9,12 +9,16 @@ const requestWindowMs = 10 * 60 * 1000;
 const requestTracker = new Map();
 const authCookieName = 'access_token';
 
-function authCookieOptions() {
-  const isProd = env.NODE_ENV === 'production';
+function authCookieOptions(req) {
+  const origin = req.get('origin');
+  const apiOrigin = `${req.protocol}://${req.get('host')}`;
+  const isCrossOrigin = Boolean(origin) && origin !== apiOrigin;
+  const isHttps = req.protocol === 'https';
+  const secure = isCrossOrigin ? true : isHttps;
   return {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
+    secure,
+    sameSite: isCrossOrigin ? 'none' : 'lax',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000
   };
@@ -34,7 +38,7 @@ async function login(req, res, next) {
     const token = jwt.sign({ sub: user._id, role: user.role }, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN
     });
-    res.cookie(authCookieName, token, authCookieOptions());
+    res.cookie(authCookieName, token, authCookieOptions(req));
     return res.json({ message: 'Authenticated' });
   } catch (err) {
     return next(err);
@@ -43,7 +47,7 @@ async function login(req, res, next) {
 
 async function logout(req, res) {
   res.clearCookie(authCookieName, {
-    ...authCookieOptions(),
+    ...authCookieOptions(req),
     expires: new Date(0)
   });
   return res.json({ message: 'Logged out' });
