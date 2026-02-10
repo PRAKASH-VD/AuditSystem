@@ -5,6 +5,7 @@ info:
   description: API for authentication, uploads, reconciliation, audit, dashboard, and admin operations.
 servers:
   - url: http://localhost:5000
+  - url: https://auditsystem-x7oy.onrender.com
 components:
   securitySchemes:
     bearerAuth:

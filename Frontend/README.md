@@ -21,6 +21,13 @@ React (Vite) client for upload, reconciliation, audit trail, and role management
 VITE_API_BASE=http://localhost:5000
 ```
 
+Deployed setup:
+
+```
+Frontend: https://audit-sys.netlify.app/
+Backend: https://auditsystem-x7oy.onrender.com
+```
+
 ## Features
 - Upload preview + column mapping
 - Job history with reuse badge

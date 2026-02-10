@@ -53,6 +53,8 @@ ADMIN_EMAIL=admin@example.com
 - Reconciliation rules are stored in MongoDB (configurable).
 - Postman collection: `Backend/postman_collection.json`.
 - OpenAPI spec (Swagger compatible): `Backend/openapi.yaml`.
+- Deployed backend: `https://auditsystem-x7oy.onrender.com`
+- Deployed frontend: `https://audit-sys.netlify.app/`
 
 ## Scripts
 - `npm run dev` - start API server
