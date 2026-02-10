@@ -10,4 +10,6 @@ const fileFingerprintSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+fileFingerprintSchema.index({ status: 1, updatedAt: -1 });
+
 module.exports = mongoose.model('FileFingerprint', fileFingerprintSchema);

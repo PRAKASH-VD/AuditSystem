@@ -43,7 +43,10 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadSummary()
+    const boot = setTimeout(() => {
+      loadSummary()
+    }, 0)
+    return () => clearTimeout(boot)
   }, [])
 
   const applyFilters = () => {
@@ -54,9 +57,6 @@ export default function Dashboard() {
     if (uploadedBy) params.uploadedBy = uploadedBy
     loadSummary(params)
   }
-
-  if (loading) return <LoadingState label="Loading dashboard..." />
-  if (error) return <ErrorState message={error} />
 
   const summary = data?.summary || {}
   const statusChart = data?.charts?.statusChart || []
@@ -129,24 +129,45 @@ export default function Dashboard() {
         }
       />
 
+      {error ? <ErrorState message={error} /> : null}
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Total Records" value={summary.totalRecords || 0} />
-        <StatCard label="Matched" value={summary.matched || 0} />
-        <StatCard label="Unmatched" value={summary.unmatched || 0} />
-        <StatCard label="Duplicates" value={summary.duplicate || 0} />
-        <StatCard label="Accuracy" value={`${data?.accuracy || 0}%`} />
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="rounded-2xl border border-black/10 bg-white p-5">
+              <div className="h-3 w-24 animate-pulse rounded bg-black/10" />
+              <div className="mt-3 h-8 w-16 animate-pulse rounded bg-black/10" />
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard label="Total Records" value={summary.totalRecords || 0} />
+            <StatCard label="Matched" value={summary.matched || 0} />
+            <StatCard label="Unmatched" value={summary.unmatched || 0} />
+            <StatCard label="Duplicates" value={summary.duplicate || 0} />
+            <StatCard label="Accuracy" value={`${data?.accuracy || 0}%`} />
+          </>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <Panel title="Daily Upload Volume">
           <div className="h-64">
-            <Bar data={barData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+            {loading ? (
+              <LoadingState label="Loading chart..." />
+            ) : (
+              <Bar data={barData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+            )}
           </div>
         </Panel>
 
         <Panel title="Match Breakdown">
           <div className="h-64">
-            <Doughnut data={doughnutData} options={{ maintainAspectRatio: false }} />
+            {loading ? (
+              <LoadingState label="Loading chart..." />
+            ) : (
+              <Doughnut data={doughnutData} options={{ maintainAspectRatio: false }} />
+            )}
           </div>
         </Panel>
       </div>

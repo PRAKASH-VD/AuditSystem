@@ -30,4 +30,20 @@ async function updateRule(req, res, next) {
   }
 }
 
-module.exports = { listRules, createRule, updateRule };
+async function updatePartialTolerance(req, res, next) {
+  try {
+    const { amountVariancePercent } = req.body;
+    const update = { 'config.amountVariancePercent': amountVariancePercent };
+    const result = await ReconciliationRule.updateMany({ type: 'partial' }, { $set: update });
+    return res.json({
+      message: 'Partial match tolerance updated',
+      amountVariancePercent,
+      matchedCount: result.matchedCount || 0,
+      modifiedCount: result.modifiedCount || 0
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { listRules, createRule, updateRule, updatePartialTolerance };

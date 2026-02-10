@@ -16,4 +16,8 @@ const ruleUpdateSchema = Joi.object({
   active: Joi.boolean().optional()
 });
 
-module.exports = { ruleSchema, ruleUpdateSchema };
+const toleranceUpdateSchema = Joi.object({
+  amountVariancePercent: Joi.number().min(0).max(1).required()
+});
+
+module.exports = { ruleSchema, ruleUpdateSchema, toleranceUpdateSchema };

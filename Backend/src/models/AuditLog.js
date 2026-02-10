@@ -21,5 +21,9 @@ function blockUpdates(next) {
 auditLogSchema.pre('updateOne', blockUpdates);
 auditLogSchema.pre('updateMany', blockUpdates);
 auditLogSchema.pre('findOneAndUpdate', blockUpdates);
+auditLogSchema.pre('deleteOne', blockUpdates);
+auditLogSchema.pre('deleteMany', blockUpdates);
+auditLogSchema.pre('findOneAndDelete', blockUpdates);
+auditLogSchema.pre('findByIdAndDelete', blockUpdates);
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

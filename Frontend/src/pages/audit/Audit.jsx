@@ -96,6 +96,19 @@ export default function Audit() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const summarizeChanges = (changes) => {
+    if (!changes || typeof changes !== 'object') return 'No field changes captured.'
+    const fields = Object.keys(changes)
+    if (!fields.length) return 'No field changes captured.'
+    return fields.join(', ')
+  }
+
+  const actorLabel = (item) => {
+    if (!item?.actor) return 'System'
+    if (typeof item.actor === 'string') return item.actor
+    return item.actor?.name || item.actor?.email || String(item.actor?._id || 'Unknown')
+  }
+
   return (
     <div className="space-y-8">
       <SectionHeader
@@ -241,13 +254,17 @@ export default function Audit() {
             timeline.map((item, index) => (
               <div key={item._id || index} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className="h-3 w-3 rounded-full bg-(--accent-2)" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-(--accent-2) text-xs font-bold text-white">
+                    {String(item.action || 'A').slice(0, 1).toUpperCase()}
+                  </div>
                   {index !== timeline.length - 1 ? <div className="h-full w-px bg-black/10" /> : null}
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-white px-4 py-3">
                   <p className="text-xs text-(--muted)">{new Date(item.createdAt).toLocaleString()}</p>
                   <p className="text-sm font-semibold">{item.action}</p>
+                  <p className="text-xs text-(--muted)">User: {actorLabel(item)}</p>
                   <p className="text-xs text-(--muted)">{item.recordType} - {item.recordId}</p>
+                  <p className="mt-1 text-xs text-(--muted)">Changes: {summarizeChanges(item.changes)}</p>
                 </div>
               </div>
             ))

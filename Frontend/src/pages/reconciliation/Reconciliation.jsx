@@ -71,6 +71,14 @@ export default function Reconciliation() {
     getCoreRowModel: getCoreRowModel()
   })
 
+  const amountVariancePercent = useMemo(() => {
+    if (!detail?.mismatches?.includes('amount')) return null
+    const uploadedAmount = Number(detail?.uploadedRecord?.amount)
+    const systemAmount = Number(detail?.systemRecord?.amount)
+    if (Number.isNaN(uploadedAmount) || Number.isNaN(systemAmount) || systemAmount === 0) return null
+    return (Math.abs(uploadedAmount - systemAmount) / Math.abs(systemAmount)) * 100
+  }, [detail])
+
   const loadPage = (nextPage = 1) => {
     setLoading(true)
     const params = { page: nextPage, limit }
@@ -239,6 +247,7 @@ export default function Reconciliation() {
                     uploaded={detail.uploadedRecord?.[field.key]}
                     system={detail.systemRecord?.[field.key]}
                     highlight={detail.mismatches?.includes(field.key)}
+                    variancePercent={field.key === 'amount' ? amountVariancePercent : null}
                   />
                 ))}
               </div>

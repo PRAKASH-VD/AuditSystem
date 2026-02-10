@@ -33,4 +33,9 @@ const uploadJobSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+uploadJobSchema.index({ status: 1, createdAt: -1 });
+uploadJobSchema.index({ uploadedBy: 1, createdAt: -1 });
+uploadJobSchema.index({ fingerprint: 1 });
+uploadJobSchema.index({ reusedFrom: 1 });
+
 module.exports = mongoose.model('UploadJob', uploadJobSchema);

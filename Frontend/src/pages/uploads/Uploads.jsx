@@ -10,6 +10,7 @@ import { StatusPill } from '../../components/StatusPill.jsx'
 import { LoadingState } from '../../components/LoadingState.jsx'
 import { ErrorState } from '../../components/ErrorState.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 import {
   uploadPreview,
   submitUpload,
@@ -28,9 +29,16 @@ const initialMapping = {
 }
 
 const STORAGE_KEY = 'mappingSets'
+const systemFields = [
+  { key: 'transactionId', label: 'Transaction ID *' },
+  { key: 'amount', label: 'Amount *' },
+  { key: 'referenceNumber', label: 'Reference Number *' },
+  { key: 'date', label: 'Date *' }
+]
 
 export default function Uploads() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const canUpload = user?.role === 'admin' || user?.role === 'analyst'
   const isAdmin = user?.role === 'admin'
   const [preview, setPreview] = useState(null)
@@ -61,6 +69,7 @@ export default function Uploads() {
   const [selectedRejectedRows, setSelectedRejectedRows] = useState([])
   const [selectedRejectedTotal, setSelectedRejectedTotal] = useState(0)
   const [monitoring, setMonitoring] = useState(null)
+  const [activeJob, setActiveJob] = useState(null)
 
   const historyPages = useMemo(
     () => Math.max(1, Math.ceil(historyTotal / historyLimit)),
@@ -79,7 +88,9 @@ export default function Uploads() {
       setHistoryPage(data.page || page)
       setHistoryTotal(data.total || 0)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load upload history')
+      const msg = err?.response?.data?.message || 'Failed to load upload history'
+      setError(msg)
+      showToast(msg, 'error')
     }
   }
 
@@ -144,6 +155,23 @@ export default function Uploads() {
     const interval = setInterval(() => loadMonitoring(), 5000)
     return () => clearInterval(interval)
   }, [isAdmin, loadMonitoring])
+
+  useEffect(() => {
+    if (status !== 'processing' || !jobId) return undefined
+    const interval = setInterval(async () => {
+      try {
+        const latest = await getUploadJob(jobId)
+        setActiveJob(latest)
+        setStatus(latest.status)
+        if (latest.status === 'completed' || latest.status === 'failed') {
+          clearInterval(interval)
+        }
+      } catch {
+        clearInterval(interval)
+      }
+    }, 2500)
+    return () => clearInterval(interval)
+  }, [status, jobId])
 
   const onDrop = useCallback(async (acceptedFiles) => {
     const file = acceptedFiles[0]
@@ -235,15 +263,24 @@ export default function Uploads() {
     try {
       await submitUpload(jobId, mapping)
       setStatus('processing')
+      showToast('Upload submitted. Processing started.', 'success')
       const interval = setInterval(async () => {
         const latest = await getUploadJob(jobId)
         setStatus(latest.status)
+        setActiveJob(latest)
         if (latest.status === 'completed' || latest.status === 'failed') {
+          if (latest.status === 'failed') {
+            showToast(latest.error || 'Upload processing failed', 'error')
+          } else {
+            showToast('Upload completed successfully', 'success')
+          }
           clearInterval(interval)
         }
       }, 2000)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Submit failed')
+      const msg = err?.response?.data?.message || 'Submit failed'
+      setError(msg)
+      showToast(msg, 'error')
     } finally {
       setLoading(false)
     }
@@ -282,9 +319,12 @@ export default function Uploads() {
       const res = await directUpload(quickFile, mapping)
       setJobId(res.jobId)
       setStatus('processing')
+      showToast('Direct upload queued', 'success')
       loadHistory(1)
     } catch (err) {
-      setError(err?.response?.data?.message || 'Direct upload failed')
+      const msg = err?.response?.data?.message || 'Direct upload failed'
+      setError(msg)
+      showToast(msg, 'error')
     } finally {
       setLoading(false)
     }
@@ -354,6 +394,10 @@ export default function Uploads() {
     columns: historyColumns,
     getCoreRowModel: getCoreRowModel()
   })
+  const progressTotal = activeJob?.stats?.total || 0
+  const progressProcessed = activeJob?.stats?.processed || 0
+  const progressPercent =
+    progressTotal > 0 ? Math.min(100, Math.round((progressProcessed / progressTotal) * 100)) : 0
 
   return (
     <div className="space-y-8">
@@ -406,6 +450,21 @@ export default function Uploads() {
 
       {loading ? <LoadingState label="Working on your file..." /> : null}
       {error ? <ErrorState message={error} /> : null}
+      {status === 'processing' ? (
+        <Panel title="Processing Progress">
+          <div className="space-y-2">
+            <div className="h-3 w-full overflow-hidden rounded-full bg-black/10">
+              <div
+                className="h-full bg-(--accent-2) transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-xs text-(--muted)">
+              {progressProcessed} / {progressTotal || '-'} rows processed ({progressPercent}%)
+            </p>
+          </div>
+        </Panel>
+      ) : null}
 
       {preview && canUpload ? (
         <Panel title="Preview & Column Mapping">
@@ -432,13 +491,13 @@ export default function Uploads() {
             </div>
 
             <div className="space-y-4">
-              {Object.keys(mapping).map((key) => (
-                <label key={key} className="block text-xs font-semibold uppercase tracking-widest text-(--muted)">
-                  {key}
+              {systemFields.map((field) => (
+                <label key={field.key} className="block text-xs font-semibold uppercase tracking-widest text-(--muted)">
+                  {field.label}
                   <select
                     className="mt-2 w-full rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm"
-                    value={mapping[key]}
-                    onChange={(event) => setMapping({ ...mapping, [key]: event.target.value })}
+                    value={mapping[field.key]}
+                    onChange={(event) => setMapping({ ...mapping, [field.key]: event.target.value })}
                   >
                     <option value="">Select column</option>
                     {mappingOptions.map((header) => (

@@ -129,6 +129,11 @@ export async function updateRule(id, payload) {
   return data
 }
 
+export async function updatePartialTolerance(amountVariancePercent) {
+  const { data } = await api.patch('/api/reconciliation/rules/partial-tolerance', { amountVariancePercent })
+  return data
+}
+
 export async function directUpload(file, mapping) {
   const form = new FormData()
   form.append('file', file)

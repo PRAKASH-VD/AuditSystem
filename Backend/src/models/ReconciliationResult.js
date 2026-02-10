@@ -13,5 +13,8 @@ const reconciliationResultSchema = new mongoose.Schema(
 );
 
 reconciliationResultSchema.index({ uploadJob: 1, status: 1 });
+reconciliationResultSchema.index({ status: 1, createdAt: -1 });
+reconciliationResultSchema.index({ uploadJob: 1, createdAt: -1 });
+reconciliationResultSchema.index({ uploadJob: 1, status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('ReconciliationResult', reconciliationResultSchema);

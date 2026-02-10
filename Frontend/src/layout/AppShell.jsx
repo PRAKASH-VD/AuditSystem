@@ -12,11 +12,13 @@ export default function AppShell() {
   const navItems = [
     { label: 'Dashboard', to: '/app' },
     { label: 'Uploads', to: '/app/uploads' },
+    { label: 'Jobs History', to: '/app/jobs' },
     { label: 'Reconciliation', to: '/app/reconciliation' },
     { label: 'Audit Trail', to: '/app/audit' },
     { label: 'Settings', to: '/app/settings' },
     ...(user?.role === 'admin'
       ? [
+          { label: 'Admin Panel', to: '/app/admin' },
           { label: 'Users', to: '/app/users' },
           { label: 'Requests', to: '/app/requests' }
         ]
@@ -36,7 +38,7 @@ export default function AppShell() {
         'sidebar'
       )
       showToast('Admin request sent')
-    } catch (err) {
+    } catch {
       showToast('Request failed', 'error')
     } finally {
       setShowModal(false)
