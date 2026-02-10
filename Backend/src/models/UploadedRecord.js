@@ -13,5 +13,9 @@ const uploadedRecordSchema = new mongoose.Schema(
 );
 
 uploadedRecordSchema.index({ uploadJob: 1, transactionId: 1 });
+uploadedRecordSchema.index({ uploadJob: 1 });
+uploadedRecordSchema.index({ transactionId: 1 });
+uploadedRecordSchema.index({ referenceNumber: 1 });
+uploadedRecordSchema.index({ transactionId: 1, referenceNumber: 1, amount: 1, date: 1 });
 
 module.exports = mongoose.model('UploadedRecord', uploadedRecordSchema);

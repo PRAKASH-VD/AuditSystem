@@ -52,6 +52,7 @@ ADMIN_EMAIL=admin@example.com
 - Upload jobs are queued in Redis and processed by `npm run worker`.
 - Reconciliation rules are stored in MongoDB (configurable).
 - Postman collection: `Backend/postman_collection.json`.
+- OpenAPI spec (Swagger compatible): `Backend/openapi.yaml`.
 
 ## Scripts
 - `npm run dev` - start API server

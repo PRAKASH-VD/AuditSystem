@@ -31,8 +31,22 @@ export default function App() {
         <Route path="uploads" element={<Uploads />} />
         <Route path="reconciliation" element={<Reconciliation />} />
         <Route path="audit" element={<Audit />} />
-        <Route path="users" element={<Users />} />
-        <Route path="requests" element={<RoleRequests />} />
+        <Route
+          path="users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="requests"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <RoleRequests />
+            </ProtectedRoute>
+          }
+        />
         <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<NotFound />} />

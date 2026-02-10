@@ -26,6 +26,7 @@ const fields = [
 export default function Reconciliation() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
+  const canManualReview = user?.role === 'admin' || user?.role === 'analyst'
   const [rows, setRows] = useState([])
   const [selected, setSelected] = useState(null)
   const [detail, setDetail] = useState(null)
@@ -246,8 +247,10 @@ export default function Reconciliation() {
             )}
           </Panel>
 
-        <Panel title="Manual Review">
-            {selected ? (
+          <Panel title="Manual Review">
+            {!canManualReview ? (
+              <p className="text-sm text-(--muted)">Viewer role has read-only reconciliation access.</p>
+            ) : selected ? (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-black/10 bg-white p-4">
                   <p className="text-xs uppercase tracking-widest text-(--muted)">Result</p>

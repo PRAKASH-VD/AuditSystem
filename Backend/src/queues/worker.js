@@ -5,12 +5,18 @@ const UploadJob = require('../models/UploadJob');
 const UploadedRecord = require('../models/UploadedRecord');
 const SystemRecord = require('../models/SystemRecord');
 const ReconciliationResult = require('../models/ReconciliationResult');
+const RejectedRow = require('../models/RejectedRow');
 const AuditLog = require('../models/AuditLog');
 const { parseFile } = require('../services/fileParser');
 const { evaluateRules } = require('../services/reconciliationEngine');
 const { ensureDefaultRules, getActiveRules } = require('../services/reconciliationRules');
 const { hashBuffer } = require('../utils/hash');
-const { isDuplicateFingerprint, saveFingerprint } = require('../services/idempotency');
+const {
+  reserveFingerprint,
+  tryClaimFailedFingerprint,
+  markFingerprintCompleted,
+  markFingerprintFailed
+} = require('../services/idempotency');
 const { env } = require('../config/env');
 
 function resolveField(raw, mapping, fallbackKeys) {
@@ -26,13 +32,35 @@ function resolveField(raw, mapping, fallbackKeys) {
 
 function buildUploadedRecord(raw, mapping) {
   const transactionId = String(resolveField(raw, mapping, ['transactionId', 'Transaction ID']) || '').trim();
-  if (!transactionId) return null;
+  if (!transactionId) throw new Error('Missing Transaction ID');
+
+  const amount = Number(resolveField(raw, mapping, ['amount', 'Amount']) || 0);
+  if (Number.isNaN(amount)) throw new Error('Invalid Amount');
+
+  const dateValue = resolveField(raw, mapping, ['date', 'Date']) || Date.now();
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) throw new Error('Invalid Date');
+
   return {
     transactionId,
-    amount: Number(resolveField(raw, mapping, ['amount', 'Amount']) || 0),
+    amount,
     referenceNumber: String(resolveField(raw, mapping, ['referenceNumber', 'Reference Number']) || '').trim(),
-    date: new Date(resolveField(raw, mapping, ['date', 'Date']) || Date.now()),
+    date,
     raw
+  };
+}
+
+function buildDuplicateKeyQuery(uploaded) {
+  const dayStart = new Date(uploaded.date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  return {
+    transactionId: uploaded.transactionId,
+    referenceNumber: uploaded.referenceNumber,
+    amount: uploaded.amount,
+    date: { $gte: dayStart, $lt: dayEnd }
   };
 }
 
@@ -41,21 +69,41 @@ async function processUpload(job) {
   const uploadJob = await UploadJob.findById(uploadJobId);
   if (!uploadJob) return;
   if (uploadJob.status === 'draft') return;
+  let fingerprint;
+  let claimedByCurrentJob = false;
 
   try {
     const buffer = require('fs').readFileSync(uploadJob.path);
-    const fingerprint = hashBuffer(buffer);
-    const existing = await isDuplicateFingerprint(fingerprint);
-    if (existing) {
-      const originalJob = await UploadJob.findById(existing.uploadJob).lean();
-      uploadJob.status = 'completed';
-      uploadJob.fingerprint = fingerprint;
-      uploadJob.reusedFrom = existing.uploadJob;
-      if (originalJob?.stats) {
-        uploadJob.stats = originalJob.stats;
+    fingerprint = hashBuffer(buffer);
+
+    const reservation = await reserveFingerprint(fingerprint, uploadJob._id);
+    if (reservation.reserved) {
+      claimedByCurrentJob = true;
+    } else if (reservation.doc?.uploadJob?.toString() !== uploadJob._id.toString()) {
+      if (reservation.doc?.status === 'failed') {
+        const claim = await tryClaimFailedFingerprint(fingerprint, uploadJob._id);
+        if (claim) {
+          claimedByCurrentJob = true;
+        }
       }
-      await uploadJob.save();
-      return;
+      if (!claimedByCurrentJob) {
+        if (reservation.doc?.status === 'completed') {
+          const originalJob = await UploadJob.findById(reservation.doc.uploadJob).lean();
+          uploadJob.status = 'completed';
+          uploadJob.fingerprint = fingerprint;
+          uploadJob.reusedFrom = reservation.doc.uploadJob;
+          if (originalJob?.stats) {
+            uploadJob.stats = originalJob.stats;
+          }
+          await uploadJob.save();
+          return;
+        }
+        uploadJob.status = 'failed';
+        uploadJob.fingerprint = fingerprint;
+        uploadJob.error = `Duplicate upload is already processing in job ${reservation.doc?.uploadJob}`;
+        await uploadJob.save();
+        return;
+      }
     }
 
     const records = await parseFile(uploadJob.path, uploadJob.filename, env.MAX_ROWS);
@@ -65,21 +113,15 @@ async function processUpload(job) {
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
-      for (const raw of batch) {
+      for (let offset = 0; offset < batch.length; offset += 1) {
+        const raw = batch[offset];
+        const rowNumber = i + offset + 1;
         try {
           const uploaded = buildUploadedRecord(raw, uploadJob.mapping);
-          if (!uploaded) {
-            stats.skipped += 1;
-            continue;
-          }
           const saved = await UploadedRecord.create({ ...uploaded, uploadJob: uploadJob._id });
-          const duplicateCount = await UploadedRecord.countDocuments({
-            uploadJob: uploadJob._id,
-            transactionId: uploaded.transactionId
-          });
-          const duplicateCountGlobal = await UploadedRecord.countDocuments({
-            transactionId: uploaded.transactionId
-          });
+          const duplicateKeyQuery = buildDuplicateKeyQuery(uploaded);
+          const duplicateCount = await UploadedRecord.countDocuments({ ...duplicateKeyQuery, uploadJob: uploadJob._id });
+          const duplicateCountGlobal = await UploadedRecord.countDocuments(duplicateKeyQuery);
           const system = await SystemRecord.findOne({ transactionId: uploaded.transactionId });
           const { status, mismatches } = evaluateRules({
             uploaded,
@@ -111,6 +153,12 @@ async function processUpload(job) {
           if (status === 'duplicate') stats.duplicate += 1;
           if (status === 'unmatched') stats.unmatched += 1;
         } catch (err) {
+          await RejectedRow.create({
+            uploadJob: uploadJob._id,
+            rowNumber,
+            reason: err.message || 'Unknown row processing error',
+            raw
+          });
           stats.failed += 1;
           stats.skipped += 1;
         }
@@ -123,11 +171,19 @@ async function processUpload(job) {
     uploadJob.stats = stats;
     uploadJob.fingerprint = fingerprint;
     await uploadJob.save();
-    await saveFingerprint(fingerprint, uploadJob._id);
+    if (claimedByCurrentJob) {
+      await markFingerprintCompleted(fingerprint, uploadJob._id);
+    }
   } catch (err) {
     uploadJob.status = 'failed';
+    if (fingerprint) {
+      uploadJob.fingerprint = fingerprint;
+    }
     uploadJob.error = err.message;
     await uploadJob.save();
+    if (claimedByCurrentJob && fingerprint) {
+      await markFingerprintFailed(fingerprint, uploadJob._id, err.message);
+    }
     throw err;
   }
 }

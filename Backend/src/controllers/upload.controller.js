@@ -1,4 +1,5 @@
 const UploadJob = require('../models/UploadJob');
+const RejectedRow = require('../models/RejectedRow');
 const { enqueueUpload } = require('../queues/uploadQueue');
 const { parseFilePreview } = require('../services/fileParser');
 const { env } = require('../config/env');
@@ -200,4 +201,86 @@ async function getPreview(req, res, next) {
   }
 }
 
-module.exports = { createUploadJob, getUploadJob, listUploadJobs, previewUpload, submitUploadJob, getPreview };
+async function listRejectedRows(req, res, next) {
+  try {
+    const uploadJob = await UploadJob.findById(req.params.id).select('_id').lean();
+    if (!uploadJob) {
+      return res.status(404).json({ message: 'Not found' });
+    }
+
+    const pageNum = Number(req.query.page) || 1;
+    const limitNum = Number(req.query.limit) || 50;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [items, total] = await Promise.all([
+      RejectedRow.find({ uploadJob: uploadJob._id })
+        .sort({ rowNumber: 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      RejectedRow.countDocuments({ uploadJob: uploadJob._id })
+    ]);
+
+    return res.json({ items, page: pageNum, limit: limitNum, total });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function getAdminMonitoring(req, res, next) {
+  try {
+    const { dateFrom, dateTo } = req.query;
+    const query = {};
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) query.createdAt.$lte = new Date(dateTo);
+    }
+
+    const [statusBuckets, recentFailures, activeJobs] = await Promise.all([
+      UploadJob.aggregate([
+        { $match: query },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]),
+      UploadJob.find({ ...query, status: 'failed' })
+        .sort({ updatedAt: -1 })
+        .limit(10)
+        .select('_id filename error updatedAt uploadedBy')
+        .lean(),
+      UploadJob.find({ ...query, status: 'processing' })
+        .sort({ updatedAt: -1 })
+        .limit(20)
+        .select('_id filename stats updatedAt uploadedBy')
+        .lean()
+    ]);
+
+    const status = {
+      draft: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0
+    };
+    for (const bucket of statusBuckets) {
+      if (status[bucket._id] !== undefined) status[bucket._id] = bucket.count;
+    }
+
+    return res.json({
+      status,
+      activeJobs,
+      recentFailures
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = {
+  createUploadJob,
+  getUploadJob,
+  listUploadJobs,
+  previewUpload,
+  submitUploadJob,
+  getPreview,
+  listRejectedRows,
+  getAdminMonitoring
+};

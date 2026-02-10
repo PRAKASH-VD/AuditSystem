@@ -147,6 +147,16 @@ export async function listUploadJobs(params) {
   return data
 }
 
+export async function listRejectedRows(jobId, params) {
+  const { data } = await api.get(`/api/uploads/${jobId}/rejected-rows`, { params })
+  return data
+}
+
+export async function getUploadMonitoring(params) {
+  const { data } = await api.get('/api/uploads/monitor/summary', { params })
+  return data
+}
+
 export async function listRoleRequests(params) {
   const { data } = await api.get('/api/role-requests', { params })
   return data

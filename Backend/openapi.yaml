@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Smart Reconciliation API
+  version: 1.0.0
+  description: API for authentication, uploads, reconciliation, audit, dashboard, and admin operations.
+servers:
+  - url: http://localhost:5000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, example: admin@example.com }
+        password: { type: string, example: change_me }
+    Mapping:
+      type: object
+      required: [transactionId, amount, referenceNumber, date]
+      properties:
+        transactionId: { type: string, example: Transaction ID }
+        amount: { type: string, example: Amount }
+        referenceNumber: { type: string, example: Reference Number }
+        date: { type: string, example: Date }
+    Rule:
+      type: object
+      properties:
+        name: { type: string, example: Partial Match Ref + Amount 2% }
+        type: { type: string, enum: [exact, partial, duplicate, unmatched], example: partial }
+        config:
+          type: object
+          example:
+            matchField: referenceNumber
+            amountVariancePercent: 0.02
+        priority: { type: number, example: 3 }
+        active: { type: boolean, example: true }
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: OK
+  /api/auth/login:
+    post:
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated
+  /api/auth/me:
+    get:
+      summary: Current user profile
+      responses:
+        '200': { description: User profile }
+  /api/auth/request-role:
+    post:
+      summary: Create a role request
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Analyst One
+              email: analyst@example.com
+              requestedRole: admin
+              message: Need admin access
+      responses:
+        '201': { description: Request created }
+  /api/auth/reset-password:
+    post:
+      summary: Reset password with one-time token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              email: analyst@example.com
+              token: 123456
+              newPassword: NewPassword123!
+      responses:
+        '200': { description: Password reset }
+  /api/auth/change-password:
+    post:
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              currentPassword: old_password
+              newPassword: new_password
+      responses:
+        '200': { description: Password changed }
+  /api/uploads:
+    get:
+      summary: List upload jobs
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [draft, processing, completed, failed] }
+        - in: query
+          name: uploadedBy
+          schema: { type: string }
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date-time }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date-time }
+      responses:
+        '200': { description: Paginated jobs }
+    post:
+      summary: Direct upload and enqueue processing
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, mapping]
+              properties:
+                file: { type: string, format: binary }
+                mapping:
+                  type: string
+                  example: '{"transactionId":"Transaction ID","amount":"Amount","referenceNumber":"Reference Number","date":"Date"}'
+      responses:
+        '202': { description: Job accepted }
+  /api/uploads/monitor/summary:
+    get:
+      summary: Admin monitoring summary for upload jobs
+      responses:
+        '200':
+          description: Upload status counts and failure details
+  /api/uploads/preview:
+    post:
+      summary: Upload preview without processing
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '200': { description: Draft job id + header/rows preview }
+  /api/uploads/{id}:
+    get:
+      summary: Get upload job by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Upload job detail }
+  /api/uploads/{id}/preview:
+    get:
+      summary: Get saved preview for draft job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Preview payload }
+  /api/uploads/{id}/submit:
+    post:
+      summary: Submit draft upload with mapping
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mapping: { $ref: '#/components/schemas/Mapping' }
+      responses:
+        '202': { description: Job accepted }
+  /api/uploads/{id}/rejected-rows:
+    get:
+      summary: List rejected rows with reason for an upload job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Paginated rejected rows }
+  /api/reconciliation:
+    get:
+      summary: List reconciliation results
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [exact, partial, duplicate, unmatched] }
+        - in: query
+          name: uploadJob
+          schema: { type: string }
+      responses:
+        '200': { description: Paginated reconciliation results }
+  /api/reconciliation/{id}:
+    get:
+      summary: Reconciliation result details (includes side-by-side records)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Result detail }
+  /api/reconciliation/{id}/manual:
+    patch:
+      summary: Manual reconciliation update
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              status: partial
+              notes: Manual correction
+              uploadedRecord:
+                amount: 980.5
+      responses:
+        '200': { description: Updated result }
+  /api/reconciliation/rules/list:
+    get:
+      summary: List rules
+      responses:
+        '200': { description: Rules ordered by priority }
+  /api/reconciliation/rules:
+    post:
+      summary: Create rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Rule' }
+      responses:
+        '201': { description: Rule created }
+  /api/reconciliation/rules/{id}:
+    patch:
+      summary: Update rule
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              active: false
+      responses:
+        '200': { description: Rule updated }
+  /api/audit:
+    get:
+      summary: List paginated audit logs
+      responses:
+        '200': { description: Paginated audit log entries }
+  /api/audit/export:
+    get:
+      summary: Export audit logs CSV
+      responses:
+        '200': { description: CSV blob }
+  /api/audit/timeline/{recordType}/{recordId}:
+    get:
+      summary: Record-specific timeline
+      parameters:
+        - in: path
+          name: recordType
+          required: true
+          schema: { type: string }
+        - in: path
+          name: recordId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Timeline entries }
+  /api/dashboard/summary:
+    get:
+      summary: Dashboard summary and chart data
+      parameters:
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date-time }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date-time }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: uploadedBy
+          schema: { type: string }
+      responses:
+        '200': { description: Summary + accuracy + charts }
+  /api/users:
+    get:
+      summary: List users (admin)
+      responses:
+        '200': { description: Users }
+    post:
+      summary: Create user (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: Analyst One
+              email: analyst@example.com
+              password: change_me
+              role: analyst
+      responses:
+        '201': { description: User created }
+  /api/users/{id}/role:
+    patch:
+      summary: Update user role (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example: { role: viewer }
+      responses:
+        '200': { description: Role updated }
+  /api/role-requests:
+    get:
+      summary: List role requests (admin)
+      responses:
+        '200': { description: Paginated requests }
+  /api/role-requests/{id}:
+    patch:
+      summary: Approve/deny role request (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example: { status: approved }
+      responses:
+        '200': { description: Updated request }
+  /api/consistency/uploads/{id}/consistency:
+    get:
+      summary: Compare upload consistency for reused results
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Consistency summary for upload job }
