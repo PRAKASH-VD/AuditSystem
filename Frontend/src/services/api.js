@@ -1,23 +1,12 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE 
-})
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
+  baseURL: import.meta.env.VITE_API_BASE,
+  withCredentials: true
 })
 
 export function setAuthToken(token) {
-  if (token) {
-    localStorage.setItem('token', token)
-  } else {
-    localStorage.removeItem('token')
-  }
+  return token
 }
 
 export async function loginRequest(payload) {
@@ -27,6 +16,11 @@ export async function loginRequest(payload) {
 
 export async function fetchMe() {
   const { data } = await api.get('/api/auth/me')
+  return data
+}
+
+export async function logoutRequest() {
+  const { data } = await api.post('/api/auth/logout')
   return data
 }
 

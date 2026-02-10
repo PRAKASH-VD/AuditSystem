@@ -7,6 +7,18 @@ const RoleRequest = require('../models/RoleRequest');
 
 const requestWindowMs = 10 * 60 * 1000;
 const requestTracker = new Map();
+const authCookieName = 'access_token';
+
+function authCookieOptions() {
+  const isProd = env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000
+  };
+}
 
 async function login(req, res, next) {
   try {
@@ -22,10 +34,19 @@ async function login(req, res, next) {
     const token = jwt.sign({ sub: user._id, role: user.role }, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN
     });
-    return res.json({ token });
+    res.cookie(authCookieName, token, authCookieOptions());
+    return res.json({ message: 'Authenticated' });
   } catch (err) {
     return next(err);
   }
+}
+
+async function logout(req, res) {
+  res.clearCookie(authCookieName, {
+    ...authCookieOptions(),
+    expires: new Date(0)
+  });
+  return res.json({ message: 'Logged out' });
 }
 
 async function me(req, res, next) {
@@ -155,4 +176,4 @@ async function requestRole(req, res, next) {
   }
 }
 
-module.exports = { login, me, requestRole, resetPassword, changePassword };
+module.exports = { login, logout, me, requestRole, resetPassword, changePassword };

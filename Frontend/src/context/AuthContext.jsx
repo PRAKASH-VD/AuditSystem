@@ -1,38 +1,51 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { fetchMe, loginRequest, setAuthToken } from '../services/api.js'
+import { fetchMe, loginRequest, logoutRequest } from '../services/api.js'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [token, setToken] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const login = async (payload) => {
-    const data = await loginRequest(payload)
-    setAuthToken(data.token)
-    setToken(data.token)
+    await loginRequest(payload)
     const me = await fetchMe()
     setUser(me)
-    return data
+    setToken(true)
+    return { message: 'Authenticated' }
   }
 
-  const logout = () => {
-    setAuthToken(null)
-    setToken(null)
+  const logout = async () => {
+    try {
+      await logoutRequest()
+    } catch {
+      // best-effort local cleanup
+    }
+    setToken(false)
     setUser(null)
   }
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false)
-      return
+    let active = true
+    ;(async () => {
+      try {
+        const me = await fetchMe()
+        if (!active) return
+        setUser(me)
+        setToken(true)
+      } catch {
+        if (!active) return
+        setUser(null)
+        setToken(false)
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
+    return () => {
+      active = false
     }
-    fetchMe()
-      .then((me) => setUser(me))
-      .catch(() => logout())
-      .finally(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const value = useMemo(() => ({ user, token, login, logout, loading }), [user, token, loading])
 
